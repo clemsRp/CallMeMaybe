@@ -6,6 +6,10 @@ from typing import Any
 from llm_sdk.llm_sdk import Small_LLM_Model
 from src.get_llm_response import get_response
 
+RESET = "\033[0m"
+CYAN = "\033[36m"
+GREEN = "\033[32m"
+
 
 def get_output_content(
             params: dict[str, Any], llm: Small_LLM_Model,
@@ -24,9 +28,14 @@ def get_output_content(
     output_content: str = ""
     output_content += "[\n"
 
+    print()
+
     for k in range(len(params["prompts"])):
         # Update the output_content for each prompt
         prompt: dict[str, str] = params["prompts"][k]
+
+        print(f"{CYAN}Prompt: {k + 1}/{len(params["prompts"])}{RESET}")
+        print(f"{GREEN}-> '{prompt.prompt}':\n{RESET}")
         res: str = get_response(
             llm, vocab, words, allowed_parts,
             json.loads(funcs), context, prompt.prompt
@@ -36,6 +45,8 @@ def get_output_content(
 
         if k != len(params["prompts"]) - 1:
             output_content += ","
+
+        print("\n")
 
         output_content += "\n"
     output_content += "]"
