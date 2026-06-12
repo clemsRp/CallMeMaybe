@@ -12,12 +12,12 @@
 	{
 		"prompt": "Greet shrek",
 		"name": "fn_greet",
-		"parameters": {"name": "shrek,"}
+		"parameters": {"name": "shrek"}
 	},
 	{
 		"prompt": "Greet john",
 		"name": "fn_greet",
-		"parameters": {"name": "john,"}
+		"parameters": {"name": "john"}
 	},
 	{
 		"prompt": "Reverse the string 'hello'",
@@ -42,7 +42,7 @@
 	{
 		"prompt": "Replace all numbers in 'Hello 34 I'm 233 years old' with NUMBERS",
 		"name": "fn_substitute_string_with_regex",
-		"parameters": {"source_string": "Hello,34,I'm,233,years,old,", "regex": "34", "replacement": "NUMBERS"}
+		"parameters": {"source_string": "Hello,34,I'm,233,years,old", "regex": "34", "replacement": "NUMBERS"}
 	},
 	{
 		"prompt": "Replace all vowels in 'Programming is fun' with asterisks",
@@ -52,6 +52,6 @@
 	{
 		"prompt": "Substitute the word 'cat' with 'dog' in 'The cat sat on the mat with another cat'",
 		"name": "fn_substitute_string_with_regex",
-		"parameters": {"source_string": "The.cat.sat.on.the.mat.with.another.cat,", "regex": "cat", "replacement": "dog"}
+		"parameters": {"source_string": "The.cat.sat.on.the.mat.with.another.cat", "regex": "cat", "replacement": "dog"}
 	}
 ]

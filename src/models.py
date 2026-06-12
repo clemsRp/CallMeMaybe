@@ -9,11 +9,11 @@ class Type(BaseModel):
     Pydantic class for the types
 
     Args:
-        type: Literal["string", "number"] = The type
+        type: Literal["string", "number", "integer"] = The type
     Return:
         None
     '''
-    type: Literal["string", "number"]
+    type: Literal["string", "number", "integer"]
 
 
 class Function(BaseModel):

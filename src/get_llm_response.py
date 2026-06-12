@@ -44,14 +44,22 @@ def get_response(
     res += '",\n\t\t"name": "'
     final_prompt: str = context + res
 
+    print(res, end="")
+
     # Updating res with the LLM response for the fn_name
     fn_name: str = get_fn_name(
         llm, vocab, words, final_prompt,
         [func["name"] for func in functions]
     )
 
+    print(fn_name, end="")
+
     res += fn_name
-    res += '\t\t"parameters": {'
+
+    more: str = '\t\t"parameters": {'
+    print(more, end="")
+
+    res += more
     context = get_context_args(functions, fn_name[:-3])
     final_prompt = context + res
 
@@ -60,7 +68,12 @@ def get_response(
     args: str = get_args(
         llm, vocab, words, args_types, final_prompt, allowed_parts
     )
+
+    print(args, end="")
     res += args
-    res += '\n\t}'
+
+    end: str = '\n\t}'
+    print(end, end="")
+    res += end
 
     return res

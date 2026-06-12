@@ -24,11 +24,12 @@ def get_fn_name(
     prompt: str = final_prompt
     while '"' not in res:
         # Update res with the fn_name
-        allowed: set[int] = get_allowed_fn_name(vocab, func_names, res)
+        allowed: set[int] = get_allowed_fn_name(llm, vocab, func_names, res)
         llm_prompt: list[int] = llm.encode(prompt)[0].tolist()
-        res += llm.decode(get_next_token(
+        next_token: str = llm.decode(get_next_token(
             llm, words, llm_prompt, allowed
         ))
+        res += next_token
         prompt = final_prompt + res
 
     if res[-2] != ",":
@@ -128,8 +129,12 @@ def get_args(
             llm, vocab, words, prompt, arg_type, allowed_parts
         )
 
-        if arg_type["type"] == "number" and "." not in arg_res:
+        if arg_type["type"] == "number" and \
+                arg_type["type"] != "integer" and \
+                "." not in arg_res:
             arg_res += ".0"
+        if arg_res[-2:] == ',"':
+            arg_res = arg_res[:-2] + '"'
 
         res += arg_res
         if res[-1] == ",":

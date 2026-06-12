@@ -20,7 +20,7 @@ def execute_pipeline(args: argparse.ArgumentParser) -> None:
         None
     '''
     # Init LLM, context and get all vocabulary
-    llm: Small_LLM_Model = Small_LLM_Model()
+    llm: Small_LLM_Model = Small_LLM_Model(model_name=args.model)
     vocab_path: str = llm.get_path_to_vocab_file()
     vocab: dict[str, int] = json.load(open(vocab_path))
     words: list[int] = list(vocab.values())
@@ -37,7 +37,7 @@ def execute_pipeline(args: argparse.ArgumentParser) -> None:
     func_names: list[str] = [f.name for f in params["functions"]]
     context_funcs: str = ", ".join(func_names)
     context: str = get_context_fn_name(context_funcs)
-    allowed_parts: dict[str, set[int]] = get_allowed_parts(vocab)
+    allowed_parts: dict[str, set[int]] = get_allowed_parts(llm, vocab)
 
     # Init then fill the output_content
     output_content: str = get_output_content(

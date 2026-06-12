@@ -36,6 +36,13 @@ def main() -> None:
         help="Define the path of the output file"
     )
 
+    # Support multiple LLM bonus
+    arg_parser.add_argument(
+        "--model",
+        default="Qwen/Qwen3-0.6B",
+        help="Define the model to use"
+    )
+
     args = arg_parser.parse_args()
 
     execute_pipeline(args)

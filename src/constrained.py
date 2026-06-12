@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 
 import re
+from llm_sdk.llm_sdk import Small_LLM_Model
 
 
-def get_allowed_parts(vocab: dict[str, int]) -> dict[str, set[int]]:
+def get_allowed_parts(
+            llm: Small_LLM_Model,
+            vocab: dict[str, int]
+        ) -> dict[str, set[int]]:
     '''
     Return the allowed parts for the constrained decoding part
 
@@ -14,22 +18,22 @@ def get_allowed_parts(vocab: dict[str, int]) -> dict[str, set[int]]:
     '''
     res: dict[str, set[int]] = {}
 
-    words = list(vocab.keys())
-
     res["number"] = {
-        k for k in range(len(vocab)) if re.fullmatch('^[0-9-.,]+$', words[k])
+        llm.encode(word)[0].tolist()[0] for word in vocab.keys()
+        if re.fullmatch('^[0-9-.,]+$', word)
     }
 
     possible_str = '^[a-zA-Z0-9àâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇs.,!?\'"-]+$'
     res["string"] = {
-        k for k in range(len(vocab)) if re.fullmatch(possible_str, words[k])
+        llm.encode(word)[0].tolist()[0] for word in vocab.keys()
+        if re.fullmatch(possible_str, word)
     }
 
     return res
 
 
 def get_allowed_fn_name(
-            vocab: dict[str, int],
+            llm: Small_LLM_Model, vocab: dict[str, int],
             func_names: list[str], current_fn_name: str
         ) -> set[int]:
     '''
@@ -42,13 +46,13 @@ def get_allowed_fn_name(
     Return:
         None
     '''
-    words: list[str] = list(vocab.keys())
     correct_funcs: list[str] = [
         func for func in func_names if func.startswith(current_fn_name)
     ]
+
     res: set[int] = {
-        k for k in range(len(vocab)) if any([
-            func[len(current_fn_name):].startswith(words[k])
+        word for word in vocab.values() if any([
+            func[len(current_fn_name):].startswith(llm.decode(word))
             for func in correct_funcs
         ])
     }
