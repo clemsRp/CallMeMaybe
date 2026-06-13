@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from typing import Any
+from src.parser import handle_error
 
 
 def get_context_fn_name(functions: str) -> str:
@@ -29,10 +30,18 @@ def get_context_args(functions: list[dict[str, Any]], fn_name: str) -> str:
     Return:
         context: str = The LLM context for the args part
     '''
-    func_def: dict[str, Any] = [
-        func for func in functions
-        if func["name"] == fn_name
-    ][0]
+    try:
+        func_def: dict[str, Any] = [
+            func for func in functions
+            if func["name"] == fn_name
+        ][0]
+
+    except IndexError:
+        handle_error(
+            "Missing function",
+            f"Didn't find the '{fn_name}' function."
+        )
+
     context = f"Function {func_def['name']}:\n"
 
     context += f"Description: {func_def['description']}\n"
