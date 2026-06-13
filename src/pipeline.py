@@ -3,11 +3,12 @@
 import argparse
 import json
 import time
+import re
 from typing import Any
 from pathlib import Path
 from llm_sdk.llm_sdk import Small_LLM_Model
 from src.constrained import get_allowed_parts
-from src.parser import get_params
+from src.parser import get_params, handle_error
 from src.context import get_context_fn_name
 from src.get_llm_response import get_response
 from src.models import Prompt
@@ -125,7 +126,26 @@ def write_output(output_file: str, output_content: str) -> None:
     Return:
         None
     '''
+    pattern = r'(?<!\\)\\(?!\\|")'
+    remplacement = r"\\\\"
+    final_output: str = re.sub(pattern, remplacement, output_content)
+
     file_path: Path = Path(output_file)
     file_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(file_path, 'w', encoding='utf-8') as f:
-        f.write(output_content)
+
+    try:
+        with open(file_path, 'w', encoding='utf-8') as f:
+            f.write(final_output)
+
+    except FileNotFoundError as e:
+        handle_error(
+            "Invalid file",
+            f"'{file_path}' doesn't exist:\n{e.args[1] if e.args else str(e)}"
+        )
+
+    except PermissionError as e:
+        handle_error(
+            "Invalid file",
+            f"'{file_path}' doesn't have the correct rights:\n"
+            f"{e.args[1] if e.args else str(e)}"
+        )

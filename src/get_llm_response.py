@@ -41,7 +41,7 @@ def get_response(
         res: str = Return of the LLM
     '''
     # set the prompt for the fn_name
-    res: str = '\t{\n\t\t"prompt": "' + prompt.replace('"', "'")
+    res: str = '\t{\n\t\t"prompt": "' + prompt.replace('"', '\\"')
     res += '",\n\t\t"name": "'
     final_prompt: str = context + res
 

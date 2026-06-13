@@ -35,4 +35,7 @@ clean:
 	rm -rf *.pyc
 	rm -rf .venv .python-version main.py
 
+test:
+	uv run -m pytest tests
+
 .PHONY: install run debug lint clean
