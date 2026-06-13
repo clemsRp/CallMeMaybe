@@ -25,8 +25,8 @@ lint:
 		--ignore-missing-imports \
 		--disallow-untyped-defs \
 		--check-untyped-defs \
-		--exclude="\.venv" \
-        --exclude="llm_sdk/llm_sdk/__init__\.py"
+		--exclude=".venv" \
+        --exclude="llm_sdk/llm_sdk/__init__.py"
 
 clean:
 	find . -type d -name "__pycache__" -exec rm -rf {} +

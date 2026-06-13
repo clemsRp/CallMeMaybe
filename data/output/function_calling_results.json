@@ -15,7 +15,7 @@
 		"parameters": {"name": "shrek"}
 	},
 	{
-		"prompt": "Greet john",
+		"prompt": "Greet jo'hn",
 		"name": "fn_greet",
 		"parameters": {"name": "john"}
 	},

@@ -17,7 +17,8 @@ def get_args_types(functions: list[dict], fn_name: str) -> dict[str, str]:
     '''
     for func in functions:
         if func["name"] == fn_name.replace('}', '').replace(',', ''):
-            return func["parameters"]
+            res: dict[str, str] = func["parameters"]
+            return res
     return {}
 
 

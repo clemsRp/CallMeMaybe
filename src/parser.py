@@ -3,42 +3,37 @@
 import sys
 import json
 from typing import Any
-from src.models import Functions, Prompts
+from rich.console import Console
+from rich.panel import Panel
+from rich.box import ROUNDED
+from src.models import Function, Functions, Prompt, Prompts
 
 
-def invalid_format() -> None:
+def handle_error(error_type: str, error: str) -> None:
     '''
-    Stop the program due to a wrong parameters format.
+    Print the errors and quit the programm using sys.exit()
 
     Args:
-        None
+        error_type: str = The type of the error
+        error: str = The error to print
     Return:
         None
     '''
-    print(
-        "Invalid parameters\n"
-        "format must be 'uv run python -m src "
-        "[--functions_definition <functions_definition_file>]  "
-        "[--input <input_file>] [--output <output_file>]'"
+    console: Console = Console()
+    error_message: str = f"[bold white]Details:[/bold white] {str(error)}"
+    error_panel = Panel(
+        error_message,
+        title=f"[bold red]{error_type}[/bold red]",
+        title_align="left",
+        border_style="red bold",
+        box=ROUNDED,
+        expand=False
     )
+    console.print(error_panel)
     sys.exit(1)
 
 
-def invalid_file(filename: str, error: Exception) -> None:
-    '''
-    Stop the program due to a wrong file format.
-
-    Args:
-        filename: str = The error's file
-        error: Exception = The Exception catch
-    Return:
-        None
-    '''
-    print(f"Error in {filename}:\n{error}")
-    sys.exit(1)
-
-
-def get_functions(filename: str) -> dict[Any, Any] | None:
+def get_functions(filename: str) -> list[Function]:
     '''
     Return the dict corresponding to
     the functions definitions
@@ -51,15 +46,42 @@ def get_functions(filename: str) -> dict[Any, Any] | None:
     '''
     try:
         with open(filename, 'r') as f:
-            content: dict = json.load(f)
+            content: list[Function] = json.load(f)
             res: Functions = Functions(functions=content)
             return res.functions
+
+    except FileNotFoundError as e:
+        handle_error(
+            "Invalid file",
+            f"'{filename}' doesn't exist:\n{e.args[1] if e.args else str(e)}"
+        )
+        return []
+
+    except PermissionError as e:
+        handle_error(
+            "Invalid file",
+            f"'{filename}' doesn't have the correct rights:\n"
+            f"{e.args[1] if e.args else str(e)}"
+        )
+        return []
+
+    except json.decoder.JSONDecodeError as e:
+        handle_error(
+            "Invalid file",
+            f"'{filename}' isn't well formated:\n"
+            f"Check for line {e.lineno} column {e.colno}"
+        )
+        return []
+
     except Exception as e:
-        invalid_file(filename, e)
-        return None
+        handle_error(
+            "Invalid file",
+            f" Error in '{filename}':\n{e.args[1] if e.args else str(e)}"
+        )
+        return []
 
 
-def get_prompts(filename: str) -> list[dict[str, str]] | None:
+def get_prompts(filename: str) -> list[Prompt]:
     '''
     Return the dict corresponding to the prompts
     converted from str to JSON/dict
@@ -71,12 +93,39 @@ def get_prompts(filename: str) -> list[dict[str, str]] | None:
     '''
     try:
         with open(filename, 'r') as f:
-            content: dict = json.load(f)
-            res = Prompts(prompts=content)
+            content: list[Prompt] = json.load(f)
+            res: Prompts = Prompts(prompts=content)
             return res.prompts
+
+    except FileNotFoundError as e:
+        handle_error(
+            "Invalid file",
+            f"'{filename}' doesn't exist:\n{e.args[1] if e.args else str(e)}"
+        )
+        return []
+
+    except PermissionError as e:
+        handle_error(
+            "Invalid file",
+            f"'{filename}' doesn't have the correct rights:\n"
+            f"{e.args[1] if e.args else str(e)}"
+        )
+        return []
+
+    except json.decoder.JSONDecodeError as e:
+        handle_error(
+            "Invalid file",
+            f"'{filename}' isn't well formated:\n"
+            f"Check for line {e.lineno} column {e.colno}"
+        )
+        return []
+
     except Exception as e:
-        invalid_file(filename, e)
-        return None
+        handle_error(
+            "Invalid file",
+            f" Error in '{filename}':\n{e.args[1] if e.args else str(e)}"
+        )
+        return []
 
 
 def get_params(
@@ -94,10 +143,6 @@ def get_params(
             - functions definitions
             - prompts
     '''
-
-    # TODO: Implement Pydantic
-    pass
-
     return {
         "functions": get_functions(functions_path),
         "prompts": get_prompts(input_file)

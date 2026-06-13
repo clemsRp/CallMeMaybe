@@ -1,9 +1,13 @@
+#!/usr/bin/env python3
+
 import pytest
+import json
+from typing import Any
 from llm_sdk.llm_sdk import Small_LLM_Model
 from src.constrained import get_allowed_parts, get_allowed_fn_name
 
 
-@pytest.fixture
+@pytest.fixture(scope="session")
 def real_llm() -> Small_LLM_Model:
     """
     Fixture providing a real Small_LLM_Model instance.
@@ -14,33 +18,39 @@ def real_llm() -> Small_LLM_Model:
     return Small_LLM_Model(model_name="Qwen/Qwen3-0.6B")
 
 
-@pytest.fixture
-def mock_vocab() -> dict[str, int]:
+@pytest.fixture(scope="session")
+def mock_vocab(real_llm: Small_LLM_Model) -> dict[str, int]:
     """
-    Fixture providing a minimal mock vocabulary for testing constraints.
+    Fixture providing a vocabulary aligned with the current src/constrained.py
 
+    Args:
+        real_llm: Small_LLM_Model = The LLM engine instance.
     Return:
-        dict[str, int] = A small dictionary mapping token strings to IDs.
+        dict[str, int] = A dictionary mapping token strings to exact first IDs.
     """
-    return {
-        "fn_add": 0,
-        "fn_greet": 1,
-        "fn_add_numbers": 2,
-        "123": 3,
-        "-45.2": 4,
-        "hello": 5,
-        "Ġworld": 6,
-        "Ġ12": 7,
-        "bad_token!": 8,
-        '"': 9,
-        ",": 10
-    }
+    vocab_path: str = real_llm.get_path_to_vocab_file()
+    vocab: dict[str, int] = json.load(open(vocab_path))
+
+    return vocab
+
+
+def encode(real_llm: Small_LLM_Model, text: str) -> Any:
+    '''
+    Encode the given text and return it
+
+    Args:
+        real_llm: Small_LLM_Model = The actual LLM engine fixture.
+        text: str = The text to encode
+    Return:
+        None
+    '''
+    return real_llm.encode(text)[0].tolist()[0]
 
 
 def test_get_allowed_parts_number(
-    real_llm: Small_LLM_Model,
-    mock_vocab: dict[str, int]
-) -> None:
+            real_llm: Small_LLM_Model,
+            mock_vocab: dict[str, int]
+        ) -> None:
     """
     Test that the number mask only includes valid numeric tokens.
 
@@ -53,20 +63,24 @@ def test_get_allowed_parts_number(
     res: dict[str, set[int]] = get_allowed_parts(real_llm, mock_vocab)
 
     assert "number" in res
-    allowed_indices: set[int] = res["number"]
+    allowed: set[int] = res["number"]
 
-    assert mock_vocab["123"] in allowed_indices
-    assert mock_vocab["-45.2"] in allowed_indices
-    assert mock_vocab["Ġ12"] in allowed_indices
+    texts: list[str] = [
+        "4242", "-5.0", "-45.2", "0", "1", "999999",
+        "3.14159", "-0.001", "42", "-7", "123.4",
+        "0.0", "1000", "-1000", "0"
+    ]
 
-    assert mock_vocab["hello"] not in allowed_indices
-    assert mock_vocab["bad_token!"] not in allowed_indices
+    assert all([
+        encode(real_llm, text) in allowed
+        for text in texts
+    ])
 
 
 def test_get_allowed_parts_string(
-    real_llm: Small_LLM_Model,
-    mock_vocab: dict[str, int]
-) -> None:
+            real_llm: Small_LLM_Model,
+            mock_vocab: dict[str, int]
+        ) -> None:
     """
     Test that the string mask correctly includes valid text tokens.
 
@@ -79,17 +93,25 @@ def test_get_allowed_parts_string(
     res: dict[str, set[int]] = get_allowed_parts(real_llm, mock_vocab)
 
     assert "string" in res
-    allowed_indices: set[int] = res["string"]
+    allowed: set[int] = res["string"]
 
-    assert mock_vocab["hello"] in allowed_indices
-    assert mock_vocab["Ġworld"] in allowed_indices
-    assert mock_vocab["bad_token!"] not in allowed_indices
+    texts: list[str] = [
+        "hello", "world", "Python", "test", "code",
+        "bonjour", "café", "tête", "l'arbre", "c'est",
+        "word!", "hello,", "yes.", "no?", '"quote"',
+        "user_123", "version-2", "text...", "OK"
+    ]
+
+    assert all([
+        encode(real_llm, text) in allowed
+        for text in texts
+    ])
 
 
 def test_get_allowed_fn_name_match(
-    real_llm: Small_LLM_Model,
-    mock_vocab: dict[str, int]
-) -> None:
+            real_llm: Small_LLM_Model,
+            mock_vocab: dict[str, int]
+        ) -> None:
     """
     Test the prefix matching logic for constraint masks on function names.
 
@@ -107,8 +129,8 @@ def test_get_allowed_fn_name_match(
         func_names=func_names,
         current_fn_name=""
     )
-    assert mock_vocab["fn_add"] in allowed
-    assert mock_vocab["fn_greet"] in allowed
+    assert encode(real_llm, "fn_add") in allowed
+    assert encode(real_llm, "fn_greet") in allowed
 
     allowed_next: set[int] = get_allowed_fn_name(
         llm=real_llm,
@@ -116,17 +138,15 @@ def test_get_allowed_fn_name_match(
         func_names=func_names,
         current_fn_name="fn_add"
     )
-    assert (
-        mock_vocab["fn_add_numbers"] in allowed_next
-        or mock_vocab[","] in allowed_next
-    )
-    assert mock_vocab["fn_greet"] not in allowed_next
+
+    assert encode(real_llm, "_numbers") in allowed_next
+    assert encode(real_llm, "fn_add_numbers") not in allowed_next
 
 
 def test_get_allowed_fn_name_fallback(
-    real_llm: Small_LLM_Model,
-    mock_vocab: dict[str, int]
-) -> None:
+            real_llm: Small_LLM_Model,
+            mock_vocab: dict[str, int]
+        ) -> None:
     """
     Test the safety fallback when no token matches the unexpected prefix.
 

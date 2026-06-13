@@ -2,7 +2,7 @@
 # ABOUTME: Provides Small_LLM_Model class for loading and running causal language models.
 
 import time
-from typing import Tuple
+from typing import Tuple, Union
 
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, PreTrainedTokenizer, PreTrainedModel, logging
@@ -55,7 +55,7 @@ class Small_LLM_Model:
         # --- load tokenizer & model -------------------------------------------------
         self._tokenizer: PreTrainedTokenizer = AutoTokenizer.from_pretrained(
             model_name, trust_remote_code=trust_remote_code
-        )
+        )  # type: ignore
         if self._tokenizer.pad_token_id is None:
             # ensure we have a pad token to keep batch helpers happy
             self._tokenizer.pad_token_id = self._tokenizer.eos_token_id
@@ -66,7 +66,7 @@ class Small_LLM_Model:
             device_map="auto" if self._device == "cuda" else None,
             trust_remote_code=trust_remote_code,
         )
-        self._model.to(self._device)
+        self._model.to(self._device)  # type: ignore
         self._model.eval()
 
         # switch to inference-only mode
@@ -80,11 +80,11 @@ class Small_LLM_Model:
         return torch.tensor([ids], device=self._device, dtype=torch.long)
 
 
-    def decode(self, ids: torch.Tensor | list[int]) -> str:
+    def decode(self, ids: Union[torch.Tensor, list[int]]) -> str:
         """Inverse of :py:meth:`encode`. Removes special tokens."""
         if isinstance(ids, torch.Tensor):
             ids = ids.tolist()
-        return self._tokenizer.decode(ids, skip_special_tokens=True)
+        return self._tokenizer.decode(ids, skip_special_tokens=True)  # type: ignore
 
 
     def get_logits_from_input_ids(self, input_ids: list[int]) -> list[float]:

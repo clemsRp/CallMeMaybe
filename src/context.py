@@ -42,4 +42,5 @@ def get_context_args(functions: list[dict[str, Any]], fn_name: str) -> str:
         context += f"- {param_name} ({param_info.get('type')}): {desc}\n"
 
     context += "\nGenerate arguments for this function:"
+
     return context

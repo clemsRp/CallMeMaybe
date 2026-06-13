@@ -1,8 +1,31 @@
 #!/usr/bin/env python3
 
+from typing import Any
 from llm_sdk.llm_sdk import Small_LLM_Model
-from src.get_next_token import get_next_token
 from src.constrained import get_allowed_fn_name
+
+
+def get_next_token(
+            llm: Small_LLM_Model, words: list[int],
+            prompt: list[int], allowed: set[int]
+        ) -> list[int]:
+    '''
+    Return the most probable token use at the end of the prompt
+
+    Args:
+        llm: Small_LLM_Model = The LLM model use
+        vocab: dict[str, int] = The dictionary of the words and their token
+        words: list[int] = All the possible tokens
+        prompt: str = The prompt send to the LLM
+        allowed: set[int] = The authorized tokens depending on the arg_type
+        arg_type: str = The type of the needed argument
+    Return:
+        token: int = The next token to add to the prompt and the LLM response
+    '''
+    logits = llm.get_logits_from_input_ids(prompt)
+    index = max(allowed, key=lambda i: logits[i])
+    res = words[index]
+    return [res]
 
 
 def get_fn_name(
@@ -41,7 +64,7 @@ def get_fn_name(
 def get_arg(
             llm: Small_LLM_Model, vocab: dict[str, int],
             words: list[int], final_prompt: str,
-            arg_type: str, allowed_parts: dict[str, set[int]]
+            arg_type: Any, allowed_parts: dict[str, set[int]]
         ) -> str:
     '''
     Return the next argument
@@ -79,7 +102,7 @@ def get_arg(
         if arg_type["type"] == "string" and '"' in token_decoded:
             break
 
-        if arg_type["type"] == "number" and \
+        if arg_type["type"] in ["number", "integer"] and \
                 (',' in token_decoded or '}' in token_decoded):
             break
 
@@ -105,7 +128,7 @@ def get_arg(
 
 def get_args(
             llm: Small_LLM_Model, vocab: dict[str, int], words: list[int],
-            args_types: dict[str, str], final_prompt: str,
+            args_types: dict[str, Any], final_prompt: str,
             allowed_parts: dict[str, set[int]]
         ) -> str:
     '''
@@ -130,9 +153,12 @@ def get_args(
         )
 
         if arg_type["type"] == "number" and \
-                arg_type["type"] != "integer" and \
                 "." not in arg_res:
             arg_res += ".0"
+        elif arg_type["type"] == "integer" and \
+                "." in arg_res:
+            arg_res = arg_res.split(".")[0] + '"'
+
         if arg_res[-2:] == ',"':
             arg_res = arg_res[:-2] + '"'
 

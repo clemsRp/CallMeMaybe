@@ -23,6 +23,11 @@ def get_allowed_parts(
         if re.fullmatch('^[0-9-.,]+$', word)
     }
 
+    res["integer"] = {
+        llm.encode(word)[0].tolist()[0] for word in vocab.keys()
+        if re.fullmatch('^[0-9-,]+$', word)
+    }
+
     possible_str = '^[a-zA-Z0-9àâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇs.,!?\'"-]+$'
     res["string"] = {
         llm.encode(word)[0].tolist()[0] for word in vocab.keys()
@@ -52,7 +57,7 @@ def get_allowed_fn_name(
 
     res: set[int] = {
         word for word in vocab.values() if any([
-            func[len(current_fn_name):].startswith(llm.decode(word))
+            func[len(current_fn_name):].startswith(llm.decode([word]))
             for func in correct_funcs
         ])
     }
