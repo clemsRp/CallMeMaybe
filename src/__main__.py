@@ -2,6 +2,7 @@
 
 import argparse
 from src.pipeline import execute_pipeline
+from src.parser import handle_error
 
 
 def main() -> None:
@@ -49,4 +50,8 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+
+    except Exception as e:
+        handle_error("Error", str(e))

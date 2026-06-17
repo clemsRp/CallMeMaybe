@@ -73,6 +73,9 @@ def get_response(
     print(args, end="")
     res += args
 
+    if res[-1] != "}":
+        res += "}"
+
     end: str = '\n\t}'
     print(end, end="")
     res += end

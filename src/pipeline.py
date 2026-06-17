@@ -35,7 +35,14 @@ def execute_pipeline(args: argparse.Namespace) -> None:
     )
 
     # Init LLM, context and get all vocabulary
-    llm: Small_LLM_Model = Small_LLM_Model(model_name=args.model)
+    try:
+        llm: Small_LLM_Model = Small_LLM_Model(model_name=args.model)
+
+    except Exception as e:
+        handle_error(
+            "LLM Error",
+            f"An error occured during the LLM initialization:\n\n{e}"
+        )
 
     try:
         vocab_path: str = llm.get_path_to_vocab_file()
@@ -43,10 +50,9 @@ def execute_pipeline(args: argparse.Namespace) -> None:
             vocab: dict[str, int] = json.load(f)
 
     except Exception as e:
-        from src.parser import handle_error
         handle_error(
             "Model Vocabulary Error",
-            f"An error occured while reading the vocabulary: {e}"
+            f"An error occured while reading the vocabulary:\n\n{e}"
         )
 
     words: list[int] = list(vocab.values())

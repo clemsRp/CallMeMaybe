@@ -28,11 +28,7 @@ def get_allowed_parts(
         if re.fullmatch('^[0-9-,]+$', word)
     }
 
-    possible_str = '^[a-zA-Z0-9àâäéèêëïîôöùûüçÀÂÄÉÈÊËÏÎÔÖÙÛÜÇs.,!?\'"-]+$'
-    res["string"] = {
-        llm.encode(word)[0].tolist()[0] for word in vocab.keys()
-        if re.fullmatch(possible_str, word)
-    }
+    res["string"] = set(vocab.values())
 
     return res
 
